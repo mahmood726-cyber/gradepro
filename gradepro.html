@@ -15,7 +15,7 @@
   --accent2: #a78bfa;
   --text: #e2e8f0;
   --text2: #94a3b8;
-  --text3: #64748b;
+  --text3: #7a8aa0;
   --high: #22c55e;
   --mod: #3b82f6;
   --low: #f59e0b;
@@ -32,7 +32,7 @@ body.light {
   --border: #e2e8f0;
   --text: #0f172a;
   --text2: #475569;
-  --text3: #94a3b8;
+  --text3: #64748b;
   --shadow: 0 4px 24px rgba(0,0,0,0.08);
 }
 /* === RESET === */
@@ -418,6 +418,15 @@ table.sof-table {
 .cert-label.MODERATE { color: var(--mod); }
 .cert-label.LOW { color: var(--low); }
 .cert-label.VERY_LOW { color: var(--vlow); }
+body.light .cert-label.HIGH { color: #15803d; }
+body.light .cert-label.MODERATE { color: #1d4ed8; }
+body.light .cert-label.LOW { color: #92400e; }
+body.light .cert-label.VERY_LOW { color: #991b1b; }
+body.light .certainty-badge.HIGH { color: #15803d; }
+body.light .certainty-badge.MODERATE { color: #1d4ed8; }
+body.light .certainty-badge.LOW { color: #92400e; }
+body.light .certainty-badge.VERY_LOW { color: #991b1b; }
+button:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
 .abs-number { font-weight: 700; font-size: 13px; }
 .abs-per1000 { font-size: 10px; color: var(--text3); }
 .diff-positive { color: var(--high); }
@@ -555,16 +564,16 @@ table.sof-table {
 
 <!-- TABS -->
 <nav class="tabs-bar" role="tablist" aria-label="Application tabs">
-  <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-entry" data-tab="entry">
+  <button id="tab-btn-entry" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-entry" data-tab="entry" tabindex="0">
     1. Outcomes Entry
   </button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-grade" data-tab="grade">
+  <button id="tab-btn-grade" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-grade" data-tab="grade" tabindex="-1">
     2. GRADE Assessment
   </button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-sof" data-tab="sof">
+  <button id="tab-btn-sof" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-sof" data-tab="sof" tabindex="-1">
     3. Summary of Findings
   </button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-export" data-tab="export">
+  <button id="tab-btn-export" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-export" data-tab="export" tabindex="-1">
     4. Export
   </button>
 </nav>
@@ -617,17 +626,18 @@ table.sof-table {
         <table class="outcomes-table" id="outcomesTable" aria-label="Outcome data entry">
           <thead>
             <tr>
-              <th class="td-name">Outcome Name</th>
-              <th class="td-measure">Measure</th>
-              <th class="td-est">Estimate</th>
-              <th class="td-est">CI Lower</th>
-              <th class="td-est">CI Upper</th>
-              <th class="td-k">k</th>
-              <th class="td-n">Total N</th>
-              <th class="td-cr">Control Rate</th>
-              <th class="td-est">I²%</th>
-              <th class="td-est">Egger p</th>
-              <th class="td-act"></th>
+              <th class="td-name" scope="col">Outcome Name</th>
+              <th class="td-measure" scope="col">Measure</th>
+              <th class="td-est" scope="col">Estimate</th>
+              <th class="td-est" scope="col">CI Lower</th>
+              <th class="td-est" scope="col">CI Upper</th>
+              <th class="td-k" scope="col">k</th>
+              <th class="td-n" scope="col">Total N</th>
+              <th class="td-cr" scope="col">Control Rate</th>
+              <th class="td-est" scope="col">I²%</th>
+              <th class="td-est" scope="col">Egger p</th>
+              <th class="td-narrow" scope="col">Follow-up</th>
+              <th class="td-act" scope="col"></th>
             </tr>
           </thead>
           <tbody id="outcomesBody">
@@ -646,7 +656,7 @@ table.sof-table {
     <div class="outcome-selector-wrap">
       <label for="gradeOutcomeSelect">Assessing outcome:</label>
       <select id="gradeOutcomeSelect" aria-label="Select outcome to assess"></select>
-      <div id="certBadge" class="certainty-badge HIGH">⊕⊕⊕⊕ HIGH</div>
+      <div id="certBadge" class="certainty-badge HIGH" aria-live="polite" aria-atomic="true">⊕⊕⊕⊕ HIGH</div>
     </div>
     <div class="score-bar">
       <span class="bar-label">Certainty score:</span>
@@ -757,7 +767,7 @@ var EXAMPLES = {
         estimate: 0.44, ci_lower: 0.26, ci_upper: 0.74,
         k: 5, totalN: 25081, controlRate: 0.005, i2: 0, eggerP: null,
         domains: {rob: 0, inconsistency: 0, indirectness: 0, imprecision: 0, pub_bias: 0},
-        upgrades: {large_effect: 1, dose_response: 0, confounding: 0},
+        upgrades: {large_effect: 0, dose_response: 0, confounding: 0},
         justifications: {rob: "", inconsistency: "", indirectness: "", imprecision: "", pub_bias: ""},
         mcid: null
       }
@@ -867,7 +877,7 @@ function autoSuggestDomains(outcome) {
   var k = outcome.k ?? 0;
   var eggerP = outcome.eggerP;
   var measure = outcome.measure;
-  var est = outcome.estimate ?? 0;
+  var est = outcome.estimate;
   var lo = outcome.ci_lower ?? 0;
   var hi = outcome.ci_upper ?? 0;
 
@@ -894,26 +904,42 @@ function autoSuggestDomains(outcome) {
 
   if (isRatio) {
     ciCrossesNull = (lo <= 1 && hi >= 1);
-    ciCrossesMCID = (lo <= 0.75 && hi >= 1.25);
-    var oisEstimate = 400; // rough default for binary
+    var mcidLo = outcome.mcidRatio !== null && outcome.mcidRatio !== undefined && isFinite(outcome.mcidRatio) ? outcome.mcidRatio : 0.75;
+    var mcidHi = outcome.mcidRatio !== null && outcome.mcidRatio !== undefined && isFinite(outcome.mcidRatio) ? (2 - outcome.mcidRatio) : 1.25;
+    ciCrossesMCID = (lo <= mcidLo && hi >= mcidHi);
+    var crv2 = outcome.controlRate !== null && outcome.controlRate !== undefined ? parseFloat(outcome.controlRate) : NaN;
+    var estForOis = est !== null && isFinite(est) ? est : NaN;
+    var oisEstimate = 400; // fallback
+    var oisNote = "";
+    if (isFinite(crv2) && isFinite(estForOis) && estForOis !== 1 && crv2 > 0) {
+      var oisCalc = Math.ceil(4 * Math.pow(1.96 + 0.842, 2) / (crv2 * Math.pow(estForOis - 1, 2)));
+      oisEstimate = Math.max(100, Math.min(10000, oisCalc));
+    } else {
+      oisNote = " (OIS≈400 — enter control rate and estimate for exact calculation)";
+    }
     var oisMet = (outcome.totalN ?? 0) >= oisEstimate;
     if (!isFinite(lo) || !isFinite(hi)) {
       // skip
     } else if (ciCrossesMCID) {
       suggestions.imprecision = "CI spans important benefit AND harm thresholds \u2192 Very serious (-2)";
     } else if (ciCrossesNull && !oisMet) {
-      suggestions.imprecision = "CI crosses null; OIS possibly not met \u2192 Serious (-1)";
+      suggestions.imprecision = "CI crosses null; OIS not met (N=" + (outcome.totalN ?? "?") + ", OIS\u2248" + oisEstimate + ")" + oisNote + " \u2192 Serious (-1)";
     } else if (!ciCrossesNull && !oisMet) {
-      suggestions.imprecision = "OIS possibly not met (N=" + (outcome.totalN ?? "?") + ") \u2192 Consider: Serious (-1)";
+      suggestions.imprecision = "OIS possibly not met (N=" + (outcome.totalN ?? "?") + ", OIS\u2248" + oisEstimate + ")" + oisNote + " \u2192 Consider: Serious (-1)";
     }
   } else if (isContinuous) {
     ciCrossesNull = (lo <= 0 && hi >= 0);
     var mcid = parseFloat(outcome.mcid);
-    if (isFinite(mcid) && mcid > 0) {
-      ciCrossesMCID = (Math.abs(lo) < mcid && Math.abs(hi) < mcid) || (lo < -mcid && hi > mcid);
+    if (isFinite(mcid) && mcid > 0 && est !== null && isFinite(est)) {
+      // CI spans both benefit and harm beyond MCID
+      var ciSpansBothMCID = (lo < -mcid && hi > mcid);
+      // CI doesn't reach MCID on the effect side
+      var ciShortOfMCID = (est >= 0 && hi < mcid) || (est < 0 && lo > -mcid);
       if (ciCrossesNull) {
         suggestions.imprecision = "CI crosses 0 (no effect) \u2192 Serious (-1)";
-      } else if (ciCrossesMCID) {
+      } else if (ciSpansBothMCID) {
+        suggestions.imprecision = "CI spans both benefit and harm beyond MCID of " + mcid + " \u2192 Very serious (-2)";
+      } else if (ciShortOfMCID) {
         suggestions.imprecision = "CI does not reach MCID of " + mcid + " \u2192 Consider: Serious (-1)";
       }
     } else {
@@ -925,15 +951,12 @@ function autoSuggestDomains(outcome) {
 
   // Publication bias suggestion
   if (k < 10) {
-    var pbMsg = "k=" + k + " (<10): funnel plot asymmetry unreliable";
+    var pbMsg = "k=" + k + " (<10): funnel test unreliable; assess funnel plot and grey literature";
     if (eggerP !== null && eggerP !== undefined && eggerP !== "") {
       var ep = parseFloat(eggerP);
       if (isFinite(ep)) {
-        if (ep < 0.10) {
-          pbMsg = "k=" + k + ", Egger p=" + ep.toFixed(3) + " \u2192 Consider: Serious (-1)";
-        } else {
-          pbMsg = "k=" + k + ", Egger p=" + ep.toFixed(3) + " \u2192 No strong evidence of bias";
-        }
+        // k<10: Egger test unreliable (>25% Type I error) — suppress "Serious" recommendation
+        pbMsg = "k=" + k + " (<10): funnel test unreliable; assess funnel plot and grey literature";
       }
     }
     suggestions.pub_bias = pbMsg;
@@ -948,11 +971,13 @@ function autoSuggestDomains(outcome) {
     }
   }
 
-  // Large effect upgrade auto
-  if (isRatio) {
-    var rrAbs = Math.abs(Math.log(est));
-    if (rrAbs >= Math.log(2)) {
-      suggestions.large_effect = "RR=" + est + " (\u22652-fold effect) \u2192 Consider large effect upgrade (+1)";
+  // Large effect upgrade auto — only for observational data per GRADE methodology
+  if (isRatio && state.design === "OBS") {
+    if (est !== null && isFinite(est) && est > 0) {
+      var rrAbs = Math.abs(Math.log(est));
+      if (rrAbs >= Math.log(2)) {
+        suggestions.large_effect = "RR=" + est + " (\u22652-fold effect) \u2192 Consider large effect upgrade (+1)";
+      }
     }
   }
 
@@ -967,7 +992,22 @@ function calcAbsoluteEffects(outcome) {
   var hi = outcome.ci_upper;
   var cr = outcome.controlRate;
 
-  if (measure === "RR" || measure === "OR" || measure === "HR") {
+  if (measure === "RD") {
+    // Risk Difference: absolute effect is direct
+    if (cr !== null && cr !== undefined && isFinite(parseFloat(cr))) {
+      var crvRD = parseFloat(cr);
+      return {
+        without: Math.round(crvRD * 1000),
+        with_est: Math.round((crvRD + est) * 1000),
+        with_lo: Math.round((crvRD + lo) * 1000),
+        with_hi: Math.round((crvRD + hi) * 1000),
+        diff: Math.round(est * 1000),
+        per: "per 1,000",
+        type: "binary"
+      };
+    }
+    return null;
+  } else if (measure === "RR" || measure === "HR") {
     if (cr !== null && cr !== undefined && isFinite(parseFloat(cr))) {
       var crv = parseFloat(cr);
       var withRate = crv * est;
@@ -980,6 +1020,24 @@ function calcAbsoluteEffects(outcome) {
         with_lo: Math.round(withLo * 1000),
         with_hi: Math.round(withHi * 1000),
         diff: Math.round(diff * 1000),
+        per: "per 1,000",
+        type: "binary",
+        approximate: (measure === "HR")
+      };
+    }
+    return null;
+  } else if (measure === "OR") {
+    if (cr !== null && cr !== undefined && isFinite(parseFloat(cr))) {
+      var crvOR = parseFloat(cr);
+      var withRateOR = (est * crvOR) / (1 - crvOR + est * crvOR);
+      var withLoOR = (lo * crvOR) / (1 - crvOR + lo * crvOR);
+      var withHiOR = (hi * crvOR) / (1 - crvOR + hi * crvOR);
+      return {
+        without: Math.round(crvOR * 1000),
+        with_est: Math.round(withRateOR * 1000),
+        with_lo: Math.round(withLoOR * 1000),
+        with_hi: Math.round(withHiOR * 1000),
+        diff: Math.round((withRateOR - crvOR) * 1000),
         per: "per 1,000",
         type: "binary"
       };
@@ -1027,7 +1085,13 @@ function generatePlainLanguage(outcome, certainty, intervention, outcomeName) {
   var oname = outcomeName || outcome.name;
 
   if (!sig) {
-    return iname + " may result in little to no difference in " + oname + ".";
+    if (certLabel === "HIGH" || certLabel === "MODERATE") {
+      return iname + " probably results in little to no difference in " + oname + ".";
+    } else if (certLabel === "LOW") {
+      return iname + " may result in little to no difference in " + oname + ".";
+    } else {
+      return "The evidence is very uncertain about the effect of " + iname + " on " + oname + ".";
+    }
   }
   if (certLabel === "HIGH") {
     return iname + " " + direction + " " + oname + ".";
@@ -1062,10 +1126,12 @@ function makeOutcome(id) {
     controlRate: null,
     i2: null,
     eggerP: null,
+    followUp: "",
     domains: {rob: 0, inconsistency: 0, indirectness: 0, imprecision: 0, pub_bias: 0},
     upgrades: {large_effect: 0, dose_response: 0, confounding: 0},
     justifications: {rob: "", inconsistency: "", indirectness: "", imprecision: "", pub_bias: ""},
-    mcid: null
+    mcid: null,
+    mcidRatio: null
   };
 }
 
@@ -1079,7 +1145,17 @@ function saveState() {
 function loadState() {
   try {
     var raw = localStorage.getItem("gradepro_state_v1");
-    if (raw) { state = JSON.parse(raw); }
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      // Prototype pollution guard
+      delete parsed.__proto__;
+      delete parsed.constructor;
+      // Only assign whitelisted keys
+      var whitelist = ["intervention", "comparator", "condition", "design", "outcomes"];
+      var safe = {};
+      whitelist.forEach(function(k) { if (k in parsed) safe[k] = parsed[k]; });
+      state = Object.assign({}, state, safe);
+    }
   } catch(e) {}
 }
 
@@ -1106,18 +1182,19 @@ function renderOutcomesTable() {
     var tr = document.createElement("tr");
     tr.dataset.idx = idx;
     tr.innerHTML =
-      '<td class="td-name"><input type="text" value="' + escHtml(oc.name) + '" placeholder="Outcome name" data-field="name" data-idx="' + idx + '"></td>' +
-      '<td class="td-measure"><select data-field="measure" data-idx="' + idx + '">' +
+      '<td class="td-name"><input type="text" value="' + escHtml(oc.name) + '" placeholder="Outcome name" aria-label="Outcome name" data-field="name" data-idx="' + idx + '"></td>' +
+      '<td class="td-measure"><select aria-label="Effect measure" data-field="measure" data-idx="' + idx + '">' +
         ['RR','OR','HR','MD','SMD','RD'].map(function(m){ return '<option value="' + m + '"' + (oc.measure===m?' selected':'') + '>' + m + '<\/option>'; }).join('') +
       '<\/select><\/td>' +
-      '<td class="td-est"><input type="number" step="any" value="' + numVal(oc.estimate) + '" placeholder="—" data-field="estimate" data-idx="' + idx + '"><\/td>' +
-      '<td class="td-est"><input type="number" step="any" value="' + numVal(oc.ci_lower) + '" placeholder="—" data-field="ci_lower" data-idx="' + idx + '"><\/td>' +
-      '<td class="td-est"><input type="number" step="any" value="' + numVal(oc.ci_upper) + '" placeholder="—" data-field="ci_upper" data-idx="' + idx + '"><\/td>' +
-      '<td class="td-k"><input type="number" step="1" min="1" value="' + numVal(oc.k) + '" placeholder="—" data-field="k" data-idx="' + idx + '"><\/td>' +
-      '<td class="td-n"><input type="number" step="1" min="1" value="' + numVal(oc.totalN) + '" placeholder="—" data-field="totalN" data-idx="' + idx + '"><\/td>' +
-      '<td class="td-cr"><input type="number" step="any" min="0" max="1" value="' + numVal(oc.controlRate) + '" placeholder="0–1" data-field="controlRate" data-idx="' + idx + '"><\/td>' +
-      '<td class="td-est"><input type="number" step="any" min="0" max="100" value="' + numVal(oc.i2) + '" placeholder="—" data-field="i2" data-idx="' + idx + '"><\/td>' +
-      '<td class="td-est"><input type="number" step="any" min="0" max="1" value="' + numVal(oc.eggerP) + '" placeholder="—" data-field="eggerP" data-idx="' + idx + '"><\/td>' +
+      '<td class="td-est"><input type="number" step="any" value="' + numVal(oc.estimate) + '" placeholder="—" aria-label="Effect estimate" data-field="estimate" data-idx="' + idx + '"><\/td>' +
+      '<td class="td-est"><input type="number" step="any" value="' + numVal(oc.ci_lower) + '" placeholder="—" aria-label="CI lower bound" data-field="ci_lower" data-idx="' + idx + '" aria-invalid="false"><\/td>' +
+      '<td class="td-est"><input type="number" step="any" value="' + numVal(oc.ci_upper) + '" placeholder="—" aria-label="CI upper bound" data-field="ci_upper" data-idx="' + idx + '" aria-invalid="false"><\/td>' +
+      '<td class="td-k"><input type="number" step="1" min="1" value="' + numVal(oc.k) + '" placeholder="—" aria-label="Number of studies (k)" data-field="k" data-idx="' + idx + '"><\/td>' +
+      '<td class="td-n"><input type="number" step="1" min="1" value="' + numVal(oc.totalN) + '" placeholder="—" aria-label="Total participants (N)" data-field="totalN" data-idx="' + idx + '"><\/td>' +
+      '<td class="td-cr"><input type="number" step="any" min="0" max="1" value="' + numVal(oc.controlRate) + '" placeholder="0–1" aria-label="Control event rate (0 to 1)" data-field="controlRate" data-idx="' + idx + '"><\/td>' +
+      '<td class="td-est"><input type="number" step="any" min="0" max="100" value="' + numVal(oc.i2) + '" placeholder="—" aria-label="I-squared (%)" data-field="i2" data-idx="' + idx + '"><\/td>' +
+      '<td class="td-est"><input type="number" step="any" min="0" max="1" value="' + numVal(oc.eggerP) + '" placeholder="—" aria-label="Egger test p-value" data-field="eggerP" data-idx="' + idx + '"><\/td>' +
+      '<td class="td-narrow"><input type="text" value="' + escHtml(oc.followUp||"") + '" placeholder="e.g. 12 weeks" aria-label="Follow-up duration" data-field="followUp" data-idx="' + idx + '"><\/td>' +
       '<td class="td-act"><button class="btn-danger btn-remove-row" data-idx="' + idx + '" title="Remove outcome" aria-label="Remove outcome ' + escHtml(oc.name||String(idx+1)) + '">\u00d7<\/button><\/td>';
     tbody.appendChild(tr);
   });
@@ -1150,6 +1227,17 @@ function onOutcomeFieldChange(e) {
     oc[field] = el.value;
   }
   saveState();
+  // P1-15: CI validation — flag if lower >= upper
+  if (field === "ci_lower" || field === "ci_upper") {
+    var lo2 = oc.ci_lower, hi2 = oc.ci_upper;
+    var loEl = document.querySelector('[data-field="ci_lower"][data-idx="' + idx + '"]');
+    var hiEl = document.querySelector('[data-field="ci_upper"][data-idx="' + idx + '"]');
+    var invalid = (lo2 !== null && hi2 !== null && isFinite(lo2) && isFinite(hi2) && lo2 >= hi2);
+    if (loEl) loEl.setAttribute("aria-invalid", invalid ? "true" : "false");
+    if (hiEl) hiEl.setAttribute("aria-invalid", invalid ? "true" : "false");
+    if (loEl) loEl.style.borderColor = invalid ? "var(--vlow)" : "";
+    if (hiEl) hiEl.style.borderColor = invalid ? "var(--vlow)" : "";
+  }
 }
 
 function numVal(v) {
@@ -1260,6 +1348,8 @@ function renderGradeTab() {
     document.getElementById("upgradesContainer").innerHTML = "";
     return;
   }
+  // P1-12: clamp currentGradeIdx after outcome deletion
+  if (state.outcomes.length > 0) currentGradeIdx = Math.min(currentGradeIdx, state.outcomes.length - 1);
   // Populate outcome selector
   var sel = document.getElementById("gradeOutcomeSelect");
   sel.innerHTML = "";
@@ -1283,6 +1373,18 @@ function renderGradeDomains(idx) {
   var badge = document.getElementById("certBadge");
   badge.textContent = CERT_SYMBOLS[cert] + " " + CERT_NAMES[cert].toUpperCase();
   badge.className = "certainty-badge " + certLabel;
+  // P1-10: warn if OBS design reaches HIGH certainty
+  var obsHighWarnId = "obs-high-warn";
+  var existingWarn = document.getElementById(obsHighWarnId);
+  if (existingWarn) existingWarn.parentNode.removeChild(existingWarn);
+  if (state.design === "OBS" && cert === 4) {
+    var warnEl = document.createElement("span");
+    warnEl.id = obsHighWarnId;
+    warnEl.title = "GRADE considers HIGH certainty from observational data exceptional and requires strong justification.";
+    warnEl.style.cssText = "margin-left:8px;background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:help;";
+    warnEl.textContent = "\u26a0 OBS\u2192HIGH: exceptional — verify upgrades";
+    badge.parentNode.insertBefore(warnEl, badge.nextSibling);
+  }
 
   // Score detail
   var base = state.design === "OBS" ? 2 : 4;
@@ -1316,6 +1418,7 @@ function renderGradeDomains(idx) {
       '<\/div>' +
       (sugg ? '<div class="suggestion-badge">\u26a0 ' + escHtml(sugg) + '<\/div>' : '') +
       (def.autoKey === null ? '<div class="guidance-text">' + escHtml(def.guidance) + '<\/div>' : '') +
+      '<fieldset style="border:none;padding:0;margin:0"><legend class="sr-only">Rate ' + escHtml(def.name) + '<\/legend>' +
       '<div class="radio-group">' +
         def.options.map(function(opt) {
           var checked = (val === opt.value) ? " checked" : "";
@@ -1326,6 +1429,7 @@ function renderGradeDomains(idx) {
             '<\/label>';
         }).join('') +
       '<\/div>' +
+      '<\/fieldset>' +
       '<textarea class="domain-justify" placeholder="Justification (optional)..." aria-label="Justification for ' + def.name + '">' + escHtml(just) + '<\/textarea>';
 
     // Extras for inconsistency (I²) and pub_bias (Egger p)
@@ -1350,6 +1454,28 @@ function renderGradeDomains(idx) {
           renderGradeDomains(idx);
         });
       });
+    }
+    if (def.key === "imprecision") {
+      // P1-16: MCID for ratio measures (user-configurable)
+      var isRatioMeasure = (oc.measure === "RR" || oc.measure === "OR" || oc.measure === "HR");
+      if (isRatioMeasure) {
+        var extraDivImp = document.createElement("div");
+        extraDivImp.className = "domain-extras";
+        extraDivImp.innerHTML =
+          '<div class="field-group">' +
+            '<label class="field-label" for="gr_mcidr_' + idx + '">MCID lower (ratio)<\/label>' +
+            '<input type="number" id="gr_mcidr_' + idx + '" min="0" max="1" step="0.01" value="' + numVal(oc.mcidRatio) + '" placeholder="e.g. 0.75" data-field="mcidRatio"><\/input>' +
+          '<\/div>';
+        dc.appendChild(extraDivImp);
+        extraDivImp.querySelectorAll("input").forEach(function(inp) {
+          inp.addEventListener("change", function() {
+            var p3 = parseFloat(inp.value);
+            oc[inp.dataset.field] = isFinite(p3) ? p3 : null;
+            saveState();
+            renderGradeDomains(idx);
+          });
+        });
+      }
     }
     if (def.key === "pub_bias") {
       var extraDiv2 = document.createElement("div");
@@ -1381,9 +1507,9 @@ function renderGradeDomains(idx) {
       });
     });
 
-    // Bind textarea
+    // Bind textarea — P1-17: use "input" event not "change" to avoid losing unsaved content
     var ta = dc.querySelector(".domain-justify");
-    ta.addEventListener("change", function() {
+    ta.addEventListener("input", function() {
       oc.justifications[def.key] = ta.value;
       saveState();
     });
@@ -1472,9 +1598,12 @@ function renderSofTab() {
     // Relative effect cell
     var relEff = "—";
     if (oc.estimate !== null && isFinite(oc.estimate)) {
-      relEff = oc.measure + " " + fmtNum(oc.estimate) +
+      relEff = escHtml(oc.measure) + " " + fmtNum(oc.estimate) +
         (oc.ci_lower !== null && oc.ci_upper !== null ?
           " (" + fmtNum(oc.ci_lower) + " to " + fmtNum(oc.ci_upper) + ")" : "");
+    }
+    if (abs && abs.approximate) {
+      relEff += '<sup title="HR-based absolute effects are approximate; assumes constant hazard">*</sup>';
     }
 
     // Absolute effect cells
@@ -1508,7 +1637,7 @@ function renderSofTab() {
 
     var tr = document.createElement("tr");
     tr.innerHTML =
-      '<td class="col-outcome">' + escHtml(oc.name || "—") + '<\/td>' +
+      '<td class="col-outcome">' + escHtml(oc.name || "—") + (oc.followUp ? '<br><small style="font-weight:400;color:var(--text3)">' + escHtml(oc.followUp) + '<\/small>' : '') + '<\/td>' +
       '<td class="col-participants">' + (oc.totalN ? fmtN(oc.totalN) : "—") + (oc.k ? '<br><small>(' + oc.k + ' ' + (state.design === "OBS" ? "studies" : "RCTs") + ')<\/small>' : '') + '<\/td>' +
       '<td class="col-relative">' + relEff + '<\/td>' +
       '<td class="col-abs-without">' + withoutCell + '<\/td>' +
@@ -1559,7 +1688,8 @@ function buildSofHtml(standalone) {
     var certName = CERT_NAMES[cert];
     var abs = calcAbsoluteEffects(oc);
     var relEff = oc.estimate !== null && isFinite(oc.estimate) ?
-      oc.measure + " " + fmtNum(oc.estimate) + (oc.ci_lower !== null ? " (" + fmtNum(oc.ci_lower) + " to " + fmtNum(oc.ci_upper) + ")" : "") : "—";
+      escHtml(oc.measure) + " " + fmtNum(oc.estimate) + (oc.ci_lower !== null ? " (" + fmtNum(oc.ci_lower) + " to " + fmtNum(oc.ci_upper) + ")" : "") : "—";
+    if (abs && abs.approximate) relEff += " *";
     var withoutTxt = "—", withTxt = "—", diffTxt = "—";
     if (abs && abs.type === "binary") {
       withoutTxt = abs.without + " per 1,000";
@@ -1611,7 +1741,7 @@ function buildCsv() {
     var without = "", withv = "", diffv = "";
     if (abs && abs.type === "binary") { without = abs.without; withv = abs.with_est; diffv = abs.diff; }
     var row = [
-      csvEsc(oc.name), oc.measure,
+      csvEsc(oc.name), csvEsc(oc.measure),
       oc.estimate??'', oc.ci_lower??'', oc.ci_upper??'',
       oc.k??'', oc.totalN??'', oc.controlRate??'',
       oc.i2??'', oc.eggerP??'',
@@ -1630,6 +1760,8 @@ function buildCsv() {
 function csvEsc(s) {
   if (s === null || s === undefined) return "";
   s = String(s);
+  // Formula injection guard (do NOT include '-' — corrupts negative medical values)
+  if (s.length > 0 && /^[=+@\t\r]/.test(s)) s = "'" + s;
   if (s.match(/[,"\n\r]/)) return '"' + s.replace(/"/g,'""') + '"';
   return s;
 }
@@ -1650,7 +1782,7 @@ function buildNarrative() {
       oc.measure + " " + fmtNum(oc.estimate) + " (95% CI " + fmtNum(oc.ci_lower) + " to " + fmtNum(oc.ci_upper) + ")" : "";
     var absText = "";
     if (abs && abs.type === "binary") {
-      absText = "Absolute effect: " + abs.diff + " fewer/more per 1,000 (from " + abs.with_lo + " to " + abs.with_hi + " per 1,000).";
+      absText = "Absolute effect: " + abs.diff + " fewer/more per 1,000 (from " + (abs.with_lo - abs.without) + " to " + (abs.with_hi - abs.without) + " per 1,000).";
     } else if (abs && abs.type === "continuous") {
       absText = "Absolute difference: " + fmtNum(abs.md) + " " + abs.measure + " (95% CI " + fmtNum(abs.md_lo) + " to " + fmtNum(abs.md_hi) + ").";
     }
@@ -1726,6 +1858,11 @@ function loadExample(key) {
 
 document.addEventListener("DOMContentLoaded", function() {
   loadState();
+  // P1-11: sync nextId after loadState to avoid duplicate IDs
+  nextId = state.outcomes.reduce(function(max, oc) {
+    var n = parseInt((oc.id || "").replace(/\D/g, ""));
+    return (n > max) ? n : max;
+  }, 0) + 1;
   loadInfoFields();
   bindInfoFields();
 
@@ -1737,7 +1874,35 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Tab switching
   document.querySelectorAll(".tab-btn").forEach(function(btn) {
-    btn.addEventListener("click", function() { switchTab(btn.dataset.tab); });
+    btn.addEventListener("click", function() {
+      switchTab(btn.dataset.tab);
+      // Update roving tabindex
+      document.querySelectorAll(".tab-btn").forEach(function(b) {
+        b.tabIndex = b.dataset.tab === btn.dataset.tab ? 0 : -1;
+      });
+      btn.focus();
+    });
+  });
+
+  // Tab keyboard navigation (roving tabindex with arrow keys)
+  document.querySelector(".tabs-bar").addEventListener("keydown", function(e) {
+    var tabs = Array.from(document.querySelectorAll(".tab-btn"));
+    var idx = tabs.indexOf(document.activeElement);
+    if (idx === -1) return;
+    var next = idx;
+    if (e.key === "ArrowRight") { next = (idx + 1) % tabs.length; }
+    else if (e.key === "ArrowLeft") { next = (idx - 1 + tabs.length) % tabs.length; }
+    else if (e.key === "Home") { next = 0; }
+    else if (e.key === "End") { next = tabs.length - 1; }
+    else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      switchTab(tabs[idx].dataset.tab);
+      return;
+    } else { return; }
+    e.preventDefault();
+    tabs.forEach(function(b, i) { b.tabIndex = i === next ? 0 : -1; });
+    tabs[next].focus();
+    switchTab(tabs[next].dataset.tab);
   });
 
   // Add outcome row
