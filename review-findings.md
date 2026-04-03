@@ -1,7 +1,7 @@
 ## Multi-Persona Review: GRADEPro (gradepro.html)
 ### Date: 2026-03-31
 ### Summary: 11 P0, 17 P1, 13 P2 (deduplicated across 5 personas)
-### Fix pass: 2026-03-31 — All P0 and P1 fixed
+### Fix pass: 2026-03-31 — All P0 and P1 fixed; P2 pass: 2026-04-03
 
 Personas: Statistical Methodologist, Security Auditor, UX/Accessibility, Software Engineer, Domain Expert (EBM)
 
@@ -67,21 +67,21 @@ Personas: Statistical Methodologist, Security Auditor, UX/Accessibility, Softwar
 
 - **P1-17** [FIXED]: Justification textarea event changed from `"change"` to `"input"`.
 
-#### P2 -- Minor (not fixed in this pass)
+#### P2 -- Minor (fixed 2026-04-03)
 
-- **P2-1** [UX]: Emoji icons exposed to screen readers without `aria-hidden`.
-- **P2-2** [UX]: ⊕/◯ certainty symbols need sr-only text.
-- **P2-3** [StatMeth]: `fmtNum` uses 1dp for values >=10 — ratio measures conventionally use 2dp.
-- **P2-4** [StatMeth]: Large-effect threshold uses `>=` not `>` for log(2) boundary.
-- **P2-5** [SWE]: ES version mixing: `var` (ES5) + `??` (ES2020).
-- **P2-6** [SWE]: `fmtN(0)` returns "—" due to falsy check.
-- **P2-7** [SWE]: Non-void `</input>` closing tags in generated HTML.
-- **P2-8** [SWE]: `<\/script>` on final line — correct for innerHTML but wrong for actual closing tag.
-- **P2-9** [UX]: Print CSS doesn't reset border-radius/box-shadow on `.card`.
-- **P2-10** [UX]: Export HTML CSS missing `.LOW`/`.VERY_LOW` color definitions.
-- **P2-11** [UX]: Redundant `role="main"` on `<main>`.
-- **P2-12** [Domain]: No footnotes section in SoF table.
-- **P2-13** [Domain]: Absolute effects display "per 1,000" without timeframe.
+- **P2-1** [FIXED]: Emoji icons now have `aria-hidden="true"` to prevent screen reader exposure.
+- **P2-2** [FIXED]: Certainty symbols (⊕/◯) wrapped with `aria-hidden="true"` and sr-only text for badge.
+- **P2-3** [FIXED]: `fmtNum` now uses 2dp for all values >=1 (consistent with ratio measure conventions).
+- **P2-4** [FIXED]: Large-effect threshold changed from `>=` to `>` for log(2) boundary.
+- **P2-5** [ACK]: ES version mixing (`var` + `??`) is cosmetic; no functional impact. Left as-is.
+- **P2-6** [FIXED]: `fmtN(0)` no longer returns em-dash; uses explicit null/undefined check.
+- **P2-7** [FIXED]: Non-void `</input>` closing tags removed from generated HTML.
+- **P2-8** [FIXED]: Final `<\/script>` corrected to proper `</script>` closing tag.
+- **P2-9** [FIXED]: Print CSS now resets `border-radius: 0` and `box-shadow: none` on `.card`.
+- **P2-10** [FIXED]: Export HTML CSS already had `.LOW`/`.VERY_LOW` color definitions (verified present).
+- **P2-11** [FIXED]: Redundant `role="main"` removed from `<main>` element.
+- **P2-12** [FIXED]: Footnotes section added to SoF table (HR approximation note, k<10 pub bias note).
+- **P2-13** [FIXED]: Absolute effects "per 1,000" now includes follow-up timeframe when available.
 
 #### False Positive Watch
 - GRADE OBS start at LOW (2) — IS correct per Guyatt 2011
@@ -90,4 +90,4 @@ Personas: Statistical Methodologist, Security Auditor, UX/Accessibility, Softwar
 - `escHtml` covers &, <, >, ", ' — IS complete for attribute contexts
 
 ---
-Status: ALL P0 + P1 FIXED (2026-03-31) — 28 fixes applied
+Status: ALL P0 + P1 + P2 FIXED (2026-04-03) — 28 P0/P1 fixes + 12 P2 fixes applied (1 P2 acknowledged cosmetic)

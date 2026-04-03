@@ -485,7 +485,7 @@ button:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
   .sof-table td { color: #000; border-color: #ccc; }
   .sof-table th { border-color: #ccc; }
   .cert-label.HIGH, .cert-label.MODERATE, .cert-label.LOW, .cert-label.VERY_LOW { color: #000; }
-  .card { border-color: #ccc; background: #fff; }
+  .card { border-color: #ccc; background: #fff; border-radius: 0; box-shadow: none; }
 }
 /* === MISC === */
 .example-select-wrap { display: flex; align-items: center; gap: 8px; }
@@ -579,12 +579,12 @@ button:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
 </nav>
 
 <!-- MAIN -->
-<main class="main-content" role="main">
+<main class="main-content">
 
   <!-- TAB 1: OUTCOMES ENTRY -->
   <div class="tab-panel active" id="tab-entry" role="tabpanel" aria-labelledby="tab-btn-entry">
     <div class="card">
-      <div class="card-title"><span class="icon">📋</span> Review Information</div>
+      <div class="card-title"><span class="icon" aria-hidden="true">📋</span> Review Information</div>
       <div class="info-grid">
         <div class="field-group">
           <label class="field-label" for="fIntervention">Intervention</label>
@@ -621,7 +621,7 @@ button:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="icon">📊</span> Outcomes</div>
+      <div class="card-title"><span class="icon" aria-hidden="true">📊</span> Outcomes</div>
       <div class="table-wrap">
         <table class="outcomes-table" id="outcomesTable" aria-label="Outcome data entry">
           <thead>
@@ -664,7 +664,7 @@ button:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
     </div>
     <div id="domainsContainer" class="domains-grid"></div>
     <div class="card upgrade-section">
-      <div class="card-title"><span class="icon">⬆</span> Upgrading Factors</div>
+      <div class="card-title"><span class="icon" aria-hidden="true">⬆</span> Upgrading Factors</div>
       <div id="upgradesContainer" class="upgrades-grid"></div>
     </div>
   </div>
@@ -983,7 +983,7 @@ function autoSuggestDomains(outcome) {
   if (isRatio && state.design === "OBS") {
     if (est !== null && isFinite(est) && est > 0) {
       var rrAbs = Math.abs(Math.log(est));
-      if (rrAbs >= Math.log(2)) {
+      if (rrAbs > Math.log(2)) {
         suggestions.large_effect = "RR=" + est + " (\u22652-fold effect) \u2192 Consider large effect upgrade (+1)";
       }
     }
@@ -1379,7 +1379,7 @@ function renderGradeDomains(idx) {
   var cert = computeCertainty(oc, state.design);
   var certLabel = CERT_LABELS[cert];
   var badge = document.getElementById("certBadge");
-  badge.textContent = CERT_SYMBOLS[cert] + " " + CERT_NAMES[cert].toUpperCase();
+  badge.innerHTML = '<span aria-hidden="true">' + CERT_SYMBOLS[cert] + '</span> <span class="sr-only">Certainty: </span>' + CERT_NAMES[cert].toUpperCase();
   badge.className = "certainty-badge " + certLabel;
   // P1-10: warn if OBS design reaches HIGH certainty
   var obsHighWarnId = "obs-high-warn";
@@ -1447,11 +1447,11 @@ function renderGradeDomains(idx) {
       extraDiv.innerHTML =
         '<div class="field-group">' +
           '<label class="field-label" for="gr_i2_' + idx + '">I\xb2 (%)<\/label>' +
-          '<input type="number" id="gr_i2_' + idx + '" min="0" max="100" step="0.1" value="' + numVal(oc.i2) + '" placeholder="e.g. 52" data-field="i2"><\/input>' +
+          '<input type="number" id="gr_i2_' + idx + '" min="0" max="100" step="0.1" value="' + numVal(oc.i2) + '" placeholder="e.g. 52" data-field="i2">' +
         '<\/div>' +
         '<div class="field-group">' +
           '<label class="field-label" for="gr_mcid_' + idx + '">MCID<\/label>' +
-          '<input type="number" id="gr_mcid_' + idx + '" step="any" value="' + numVal(oc.mcid) + '" placeholder="e.g. 0.5" data-field="mcid"><\/input>' +
+          '<input type="number" id="gr_mcid_' + idx + '" step="any" value="' + numVal(oc.mcid) + '" placeholder="e.g. 0.5" data-field="mcid">' +
         '<\/div>';
       dc.appendChild(extraDiv);
       extraDiv.querySelectorAll("input").forEach(function(inp) {
@@ -1472,7 +1472,7 @@ function renderGradeDomains(idx) {
         extraDivImp.innerHTML =
           '<div class="field-group">' +
             '<label class="field-label" for="gr_mcidr_' + idx + '">MCID lower (ratio)<\/label>' +
-            '<input type="number" id="gr_mcidr_' + idx + '" min="0" max="1" step="0.01" value="' + numVal(oc.mcidRatio) + '" placeholder="e.g. 0.75" data-field="mcidRatio"><\/input>' +
+            '<input type="number" id="gr_mcidr_' + idx + '" min="0" max="1" step="0.01" value="' + numVal(oc.mcidRatio) + '" placeholder="e.g. 0.75" data-field="mcidRatio">' +
           '<\/div>';
         dc.appendChild(extraDivImp);
         extraDivImp.querySelectorAll("input").forEach(function(inp) {
@@ -1491,7 +1491,7 @@ function renderGradeDomains(idx) {
       extraDiv2.innerHTML =
         '<div class="field-group">' +
           '<label class="field-label" for="gr_egger_' + idx + '">Egger p<\/label>' +
-          '<input type="number" id="gr_egger_' + idx + '" min="0" max="1" step="0.001" value="' + numVal(oc.eggerP) + '" placeholder="e.g. 0.04" data-field="eggerP"><\/input>' +
+          '<input type="number" id="gr_egger_' + idx + '" min="0" max="1" step="0.001" value="' + numVal(oc.eggerP) + '" placeholder="e.g. 0.04" data-field="eggerP">' +
         '<\/div>';
       dc.appendChild(extraDiv2);
       extraDiv2.querySelectorAll("input").forEach(function(inp) {
@@ -1618,8 +1618,9 @@ function renderSofTab() {
     var withoutCell = "—", withCell = "—", diffCell = "—";
     if (abs) {
       if (abs.type === "binary") {
-        withoutCell = '<span class="abs-number">' + abs.without + '<\/span><br><span class="abs-per1000">per 1,000<\/span>';
-        withCell = '<span class="abs-number">' + abs.with_est + '<\/span><br><span class="abs-per1000">per 1,000<\/span>';
+        var per1000Lbl = 'per 1,000' + (oc.followUp ? ' (' + escHtml(oc.followUp) + ')' : '');
+        withoutCell = '<span class="abs-number">' + abs.without + '<\/span><br><span class="abs-per1000">' + per1000Lbl + '<\/span>';
+        withCell = '<span class="abs-number">' + abs.with_est + '<\/span><br><span class="abs-per1000">' + per1000Lbl + '<\/span>';
         var diffSign = abs.diff > 0 ? "+" : "";
         var diffClass = abs.diff < 0 ? "diff-negative" : abs.diff > 0 ? "diff-positive" : "";
         var diffCI = "";
@@ -1628,7 +1629,7 @@ function renderSofTab() {
           var dhi = abs.with_hi - abs.without;
           diffCI = "<br><small>(" + (dlo>=0?"+":"") + Math.round(dlo) + " to " + (dhi>=0?"+":"") + Math.round(dhi) + ")<\/small>";
         }
-        diffCell = '<span class="abs-number ' + diffClass + '">' + diffSign + abs.diff + '<\/span>' + diffCI + '<br><span class="abs-per1000">per 1,000<\/span>';
+        diffCell = '<span class="abs-number ' + diffClass + '">' + diffSign + abs.diff + '<\/span>' + diffCI + '<br><span class="abs-per1000">' + per1000Lbl + '<\/span>';
       } else {
         withoutCell = "—";
         withCell = "—";
@@ -1651,23 +1652,25 @@ function renderSofTab() {
       '<td class="col-abs-without">' + withoutCell + '<\/td>' +
       '<td class="col-abs-with">' + withCell + '<\/td>' +
       '<td class="col-diff">' + diffCell + '<\/td>' +
-      '<td class="col-certainty"><div class="certainty-cell"><span class="cert-symbols">' + CERT_SYMBOLS[cert] + '<\/span><span class="cert-label ' + certLabel + '">' + certName.toUpperCase() + '<\/span><\/div><\/td>' +
+      '<td class="col-certainty"><div class="certainty-cell"><span class="cert-symbols" aria-hidden="true">' + CERT_SYMBOLS[cert] + '<\/span><span class="cert-label ' + certLabel + '">' + certName.toUpperCase() + '<\/span><\/div><\/td>' +
       '<td class="col-what"><div class="what-text">' + escHtml(plainLang) + '<\/div><\/td>';
     tbody.appendChild(tr);
   });
 }
 
-function fmtNum(v) {
-  if (v === null || v === undefined || !isFinite(v)) return "—";
+function fmtNum(v, forceDecimals) {
+  if (v === null || v === undefined || !isFinite(v)) return "\u2014";
   var n = parseFloat(v);
-  if (Math.abs(n) >= 10) return n.toFixed(1);
+  if (forceDecimals !== undefined) return n.toFixed(forceDecimals);
+  if (Math.abs(n) >= 10) return n.toFixed(2);
   if (Math.abs(n) >= 1) return n.toFixed(2);
   return n.toFixed(3);
 }
 
 function fmtN(v) {
-  if (!v) return "—";
-  return parseInt(v).toLocaleString();
+  if (v === null || v === undefined) return "\u2014";
+  var n = parseInt(v, 10);
+  return isFinite(n) ? n.toLocaleString() : "\u2014";
 }
 
 // === EXPORT ENGINE ===
@@ -1700,10 +1703,11 @@ function buildSofHtml(standalone) {
     if (abs && abs.approximate) relEff += " *";
     var withoutTxt = "—", withTxt = "—", diffTxt = "—";
     if (abs && abs.type === "binary") {
-      withoutTxt = abs.without + " per 1,000";
-      withTxt = abs.with_est + " per 1,000";
+      var fuLbl = oc.followUp ? " per 1,000 (" + oc.followUp + ")" : " per 1,000";
+      withoutTxt = abs.without + fuLbl;
+      withTxt = abs.with_est + fuLbl;
       var ds = abs.diff > 0 ? "+" : "";
-      diffTxt = ds + abs.diff + " per 1,000";
+      diffTxt = ds + abs.diff + fuLbl;
     } else if (abs && abs.type === "continuous") {
       diffTxt = fmtNum(abs.md) + " " + abs.measure + " (" + fmtNum(abs.md_lo) + " to " + fmtNum(abs.md_hi) + ")";
     }
@@ -1732,6 +1736,20 @@ function buildSofHtml(standalone) {
     '<\/tr><\/thead>' +
     '<tbody>' + rows + '<\/tbody>' +
     '<\/table>';
+
+  // Build footnotes section
+  var footnotes = [];
+  var hasHR = state.outcomes.some(function(oc) {
+    var abs = calcAbsoluteEffects(oc);
+    return abs && abs.approximate;
+  });
+  if (hasHR) footnotes.push('* Absolute effect for HR estimated using baseline risk and assumed constant hazard; interpret with caution.');
+  var hasLowK = state.outcomes.some(function(oc) { return oc.k && oc.k < 10; });
+  if (hasLowK) footnotes.push('Publication bias assessment limited when fewer than 10 studies.');
+  if (footnotes.length > 0) {
+    tbl += '<div class="sof-footnotes" style="font-size:11px;color:#555;margin-top:8px;border-top:1px solid #ccc;padding-top:6px">' +
+      footnotes.map(function(f) { return '<p style="margin:2px 0">' + escHtml(f) + '<\/p>'; }).join('') + '<\/div>';
+  }
 
   if (standalone) {
     return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Summary of Findings<\/title>' + styleBlock + '<\/head><body>' + tbl + '<\/body><\/html>';
@@ -1980,6 +1998,6 @@ document.addEventListener("DOMContentLoaded", function() {
     setTimeout(function() { window.print(); }, 100);
   });
 });
-<\/script>
+</script>
 </body>
 </html>

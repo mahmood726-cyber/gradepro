@@ -453,7 +453,7 @@ class TestGRADEPro(unittest.TestCase):
     # ================================================================
     def test_34_fmtnum(self):
         """fmtNum rounds correctly for various magnitudes."""
-        self.assertEqual(self.js("return fmtNum(15.6789);"), '15.7')
+        self.assertEqual(self.js("return fmtNum(15.6789);"), '15.68')
         self.assertEqual(self.js("return fmtNum(2.345);"), '2.35')
         self.assertEqual(self.js("return fmtNum(0.0412);"), '0.041')
         self.assertEqual(self.js("return fmtNum(null);"), '\u2014')
