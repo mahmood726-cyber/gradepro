@@ -911,8 +911,16 @@ function autoSuggestDomains(outcome) {
     var estForOis = est !== null && isFinite(est) ? est : NaN;
     var oisEstimate = 400; // fallback
     var oisNote = "";
-    if (isFinite(crv2) && isFinite(estForOis) && estForOis !== 1 && crv2 > 0) {
-      var oisCalc = Math.ceil(4 * Math.pow(1.96 + 0.842, 2) / (crv2 * Math.pow(estForOis - 1, 2)));
+    if (isFinite(crv2) && isFinite(estForOis) && estForOis !== 1 && crv2 > 0 && crv2 < 1) {
+      // Convert OR/HR to approximate RR for OIS estimation
+      var rrForOis = estForOis;
+      if (measure === "OR") {
+        rrForOis = estForOis / (1 - crv2 + estForOis * crv2);
+      }
+      // OIS = 2*(z_alpha/2 + z_beta)^2 * [p0*(1-p0) + p1*(1-p1)] / (p1-p0)^2
+      // Simplified: 4*(za+zb)^2 / (CER*(1-CER)*(RRR)^2) where RRR = |1-RR|
+      var rrr = Math.abs(1 - rrForOis);
+      var oisCalc = (rrr > 0) ? Math.ceil(4 * Math.pow(1.96 + 0.842, 2) / (crv2 * (1 - crv2) * rrr * rrr)) : 10000;
       oisEstimate = Math.max(100, Math.min(10000, oisCalc));
     } else {
       oisNote = " (OIS≈400 — enter control rate and estimate for exact calculation)";
