@@ -1432,7 +1432,7 @@ function renderGradeDomains(idx) {
           var checked = (val === opt.value) ? " checked" : "";
           var selClass = (val === opt.value) ? " selected" : "";
           return '<label class="radio-option' + selClass + '">' +
-            '<input type="radio" name="domain_' + def.key + '_' + idx + '" value="' + opt.value + '"' + checked + '>' +
+            '<input type="radio" name="domain_' + def.key + '_' + idx + '" aria-label="Rate ' + escHtml(def.name) + ': ' + escHtml(opt.label) + '" value="' + opt.value + '"' + checked + '>' +
             '<span class="radio-label">' + escHtml(opt.label) + '<\/span>' +
             '<\/label>';
         }).join('') +
@@ -1542,7 +1542,7 @@ function renderGradeDomains(idx) {
           var checked = (val === opt.value) ? " checked" : "";
           var sc = (val === opt.value) ? " selected" : "";
           return '<label class="radio-option' + sc + '">' +
-            '<input type="radio" name="upgrade_' + def.key + '_' + idx + '" value="' + opt.value + '"' + checked + '>' +
+            '<input type="radio" name="upgrade_' + def.key + '_' + idx + '" aria-label="Rate upgrade ' + escHtml(def.name) + ': ' + escHtml(opt.label) + '" value="' + opt.value + '"' + checked + '>' +
             '<span class="radio-label">' + escHtml(opt.label) + '<\/span>' +
             '<\/label>';
         }).join('') +

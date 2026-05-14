@@ -1,5 +1,10 @@
 """Selenium tests for GRADEPro — GRADE Summary of Findings generator."""
-import sys, io, os, unittest, time, math
+import math
+import time
+import unittest
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from threading import Thread
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -7,28 +12,62 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-HTML = 'file:///' + os.path.abspath(r'C:\Models\GRADEPro\gradepro.html').replace('\\', '/')
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+class QuietHTTPServer(ThreadingHTTPServer):
+    # Keep this false so parallel browser suites fall back instead of
+    # sharing 127.0.0.1:8000 on Windows.
+    allow_reuse_address = False
+    daemon_threads = True
+
+
+class QuietHandler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(REPO_ROOT), **kwargs)
+
+    def log_message(self, format, *args):
+        return
 
 
 class TestGRADEPro(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        try:
+            cls.server = QuietHTTPServer(("127.0.0.1", 8000), QuietHandler)
+        except OSError:
+            cls.server = QuietHTTPServer(("127.0.0.1", 0), QuietHandler)
+        cls.html = f"http://127.0.0.1:{cls.server.server_port}/gradepro.html"
+        cls.server_thread = Thread(target=cls.server.serve_forever, daemon=True)
+        cls.server_thread.start()
+
         opts = Options()
         opts.add_argument('--headless=new')
         opts.add_argument('--no-sandbox')
         opts.add_argument('--disable-gpu')
         opts.add_argument('--window-size=1400,900')
-        cls.drv = webdriver.Chrome(options=opts)
-        cls.drv.get(HTML)
+        try:
+            cls.drv = webdriver.Chrome(options=opts)
+        except Exception:
+            cls.server.shutdown()
+            cls.server_thread.join(timeout=5)
+            cls.server.server_close()
+            raise
+        cls.drv.get(cls.html)
         time.sleep(1.5)
         # Clear any saved state to start fresh
         cls.drv.execute_script("localStorage.removeItem('gradepro_state_v1');")
-        cls.drv.get(HTML)
+        cls.drv.get(cls.html)
         time.sleep(1)
 
     @classmethod
     def tearDownClass(cls):
-        cls.drv.quit()
+        try:
+            cls.drv.quit()
+        finally:
+            cls.server.shutdown()
+            cls.server_thread.join(timeout=5)
+            cls.server.server_close()
 
     def js(self, script):
         return self.drv.execute_script(script)
@@ -607,5 +646,4 @@ class TestGRADEPro(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     unittest.main(verbosity=2)
