@@ -995,72 +995,60 @@ function autoSuggestDomains(outcome) {
 // === SOF TABLE ENGINE ===
 function calcAbsoluteEffects(outcome) {
   var measure = outcome.measure;
-  var est = outcome.estimate;
-  var lo = outcome.ci_lower;
-  var hi = outcome.ci_upper;
-  var cr = outcome.controlRate;
 
-  if (measure === "RD") {
-    // Risk Difference: absolute effect is direct
-    if (cr !== null && cr !== undefined && isFinite(parseFloat(cr))) {
-      var crvRD = parseFloat(cr);
-      return {
-        without: Math.round(crvRD * 1000),
-        with_est: Math.round((crvRD + est) * 1000),
-        with_lo: Math.round((crvRD + lo) * 1000),
-        with_hi: Math.round((crvRD + hi) * 1000),
-        diff: Math.round(est * 1000),
-        per: "per 1,000",
-        type: "binary"
-      };
-    }
-    return null;
-  } else if (measure === "RR" || measure === "HR") {
-    if (cr !== null && cr !== undefined && isFinite(parseFloat(cr))) {
-      var crv = parseFloat(cr);
-      var withRate = crv * est;
-      var withLo = crv * lo;
-      var withHi = crv * hi;
-      var diff = withRate - crv;
-      return {
-        without: Math.round(crv * 1000),
-        with_est: Math.round(withRate * 1000),
-        with_lo: Math.round(withLo * 1000),
-        with_hi: Math.round(withHi * 1000),
-        diff: Math.round(diff * 1000),
-        per: "per 1,000",
-        type: "binary",
-        approximate: (measure === "HR")
-      };
-    }
-    return null;
-  } else if (measure === "OR") {
-    if (cr !== null && cr !== undefined && isFinite(parseFloat(cr))) {
-      var crvOR = parseFloat(cr);
-      var withRateOR = (est * crvOR) / (1 - crvOR + est * crvOR);
-      var withLoOR = (lo * crvOR) / (1 - crvOR + lo * crvOR);
-      var withHiOR = (hi * crvOR) / (1 - crvOR + hi * crvOR);
-      return {
-        without: Math.round(crvOR * 1000),
-        with_est: Math.round(withRateOR * 1000),
-        with_lo: Math.round(withLoOR * 1000),
-        with_hi: Math.round(withHiOR * 1000),
-        diff: Math.round((withRateOR - crvOR) * 1000),
-        per: "per 1,000",
-        type: "binary"
-      };
-    }
-    return null;
-  } else {
-    // MD or SMD: report directly
+  // Continuous estimates are differences, not event probabilities.
+  if (measure === "MD" || measure === "SMD") {
     return {
-      md: est,
-      md_lo: lo,
-      md_hi: hi,
-      type: "continuous",
-      measure: measure
+      md: outcome.estimate, md_lo: outcome.ci_lower, md_hi: outcome.ci_upper,
+      type: "continuous", measure: measure
     };
   }
+
+  // A hazard ratio cannot be multiplied by a cumulative event risk. An HR-to-risk
+  // conversion needs time-matched baseline survival and a stated PH assumption.
+  if (measure === "HR") return null;
+  if (measure !== "RR" && measure !== "OR" && measure !== "RD") return null;
+
+  function finiteNumber(v) {
+    if (typeof v !== "number" && typeof v !== "string") return null;
+    if (typeof v === "string" && !v.trim()) return null;
+    var n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  var cr = finiteNumber(outcome.controlRate);
+  var est = finiteNumber(outcome.estimate);
+  var lo = finiteNumber(outcome.ci_lower);
+  var hi = finiteNumber(outcome.ci_upper);
+
+  // No empty/invalid inputs or impossible assumed event probabilities.
+  if (cr === null || est === null || lo === null || hi === null ||
+      cr < 0 || cr > 1 || lo > est || est > hi) return null;
+
+  var convert;
+  if (measure === "RD") {
+    convert = function(v) { return cr + v; };
+  } else if (measure === "RR") {
+    if (lo < 0) return null;
+    convert = function(v) { return cr * v; };
+  } else {
+    if (lo <= 0) return null;
+    convert = function(v) { return (v * cr) / (1 - cr + v * cr); };
+  }
+
+  var p = convert(est), pLo = convert(lo), pHi = convert(hi);
+  function probability(x) { return Number.isFinite(x) && x >= 0 && x <= 1; }
+  // Reject rather than clip: clipping silently changes the interval and effect.
+  if (!probability(p) || !probability(pLo) || !probability(pHi)) return null;
+
+  return {
+    without: Math.round(cr * 1000),
+    with_est: Math.round(p * 1000),
+    with_lo: Math.round(pLo * 1000),
+    with_hi: Math.round(pHi * 1000),
+    diff: Math.round((p - cr) * 1000),
+    per: "per 1,000",
+    type: "binary"
+  };
 }
 
 // === PLAIN LANGUAGE ENGINE ===
@@ -1610,8 +1598,8 @@ function renderSofTab() {
         (oc.ci_lower !== null && oc.ci_upper !== null ?
           " (" + fmtNum(oc.ci_lower) + " to " + fmtNum(oc.ci_upper) + ")" : "");
     }
-    if (abs && abs.approximate) {
-      relEff += '<sup title="HR-based absolute effects are approximate; assumes constant hazard">*</sup>';
+    if (oc.measure === "HR") {
+      relEff += '<sup title="HR is not a risk ratio. Absolute events per 1,000 need time-matched baseline survival and explicit proportional-hazards assumptions">†</sup>';
     }
 
     // Absolute effect cells
@@ -1700,7 +1688,7 @@ function buildSofHtml(standalone) {
     var abs = calcAbsoluteEffects(oc);
     var relEff = oc.estimate !== null && isFinite(oc.estimate) ?
       escHtml(oc.measure) + " " + fmtNum(oc.estimate) + (oc.ci_lower !== null ? " (" + fmtNum(oc.ci_lower) + " to " + fmtNum(oc.ci_upper) + ")" : "") : "—";
-    if (abs && abs.approximate) relEff += " *";
+    if (oc.measure === "HR") relEff += " †";
     var withoutTxt = "—", withTxt = "—", diffTxt = "—";
     if (abs && abs.type === "binary") {
       var fuLbl = oc.followUp ? " per 1,000 (" + oc.followUp + ")" : " per 1,000";
@@ -1739,11 +1727,8 @@ function buildSofHtml(standalone) {
 
   // Build footnotes section
   var footnotes = [];
-  var hasHR = state.outcomes.some(function(oc) {
-    var abs = calcAbsoluteEffects(oc);
-    return abs && abs.approximate;
-  });
-  if (hasHR) footnotes.push('* Absolute effect for HR estimated using baseline risk and assumed constant hazard; interpret with caution.');
+  var hasHR = state.outcomes.some(function(oc) { return oc.measure === "HR"; });
+  if (hasHR) footnotes.push("† HR is not a risk ratio. Absolute event risks are withheld unless time-matched baseline survival and proportional-hazards assumptions are established.");
   var hasLowK = state.outcomes.some(function(oc) { return oc.k && oc.k < 10; });
   if (hasLowK) footnotes.push('Publication bias assessment limited when fewer than 10 studies.');
   if (footnotes.length > 0) {
@@ -1814,7 +1799,8 @@ function buildNarrative() {
     }
     lines.push(oc.name + " (" + certName + " certainty, " + CERT_SYMBOLS[cert] + "): " + plain +
       (relEff ? " " + relEff + "." : "") +
-      (absText ? " " + absText : ""));
+      (absText ? " " + absText : "") +
+      (oc.measure === "HR" ? " Absolute events per 1,000 were not calculated from an HR without time-matched baseline survival and a proportional-hazards assumption." : ""));
   });
   return lines.join("\n");
 }
