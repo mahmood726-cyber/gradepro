@@ -1015,7 +1015,33 @@ function calcAbsoluteEffects(outcome) {
       };
     }
     return null;
-  } else if (measure === "RR" || measure === "HR") {
+  } else if (measure === "HR") {
+    // Cochrane Handbook 14.1.5.2: event risk at the same follow-up time
+    // under proportional hazards is 1 - (1 - comparator event risk)^HR.
+    function hrNumber(v) {
+      if (typeof v === "number") return v;
+      return typeof v === "string" && v.trim() !== "" ? Number(v) : NaN;
+    }
+    var crvHR = hrNumber(cr), estHR = hrNumber(est),
+        loHR = hrNumber(lo), hiHR = hrNumber(hi);
+    if (![crvHR, estHR, loHR, hiHR].every(Number.isFinite) ||
+        crvHR < 0 || crvHR > 1 || loHR <= 0 || estHR <= 0 ||
+        hiHR <= 0 || loHR > estHR || estHR > hiHR) return null;
+    var logSurvival = Math.log1p(-crvHR);
+    function eventRisk(hr) { return -Math.expm1(hr * logSurvival); }
+    var withRateHR = eventRisk(estHR), withLoHR = eventRisk(loHR), withHiHR = eventRisk(hiHR);
+    if (![withRateHR, withLoHR, withHiHR].every(Number.isFinite)) return null;
+    return {
+      without: Math.round(crvHR * 1000),
+      with_est: Math.round(withRateHR * 1000),
+      with_lo: Math.round(withLoHR * 1000),
+      with_hi: Math.round(withHiHR * 1000),
+      diff: Math.round((withRateHR - crvHR) * 1000),
+      per: "per 1,000",
+      type: "binary",
+      approximate: true
+    };
+  } else if (measure === "RR") {
     if (cr !== null && cr !== undefined && isFinite(parseFloat(cr))) {
       var crv = parseFloat(cr);
       var withRate = crv * est;
@@ -1030,7 +1056,7 @@ function calcAbsoluteEffects(outcome) {
         diff: Math.round(diff * 1000),
         per: "per 1,000",
         type: "binary",
-        approximate: (measure === "HR")
+        approximate: false
       };
     }
     return null;
@@ -1611,7 +1637,7 @@ function renderSofTab() {
           " (" + fmtNum(oc.ci_lower) + " to " + fmtNum(oc.ci_upper) + ")" : "");
     }
     if (abs && abs.approximate) {
-      relEff += '<sup title="HR-based absolute effects are approximate; assumes constant hazard">*</sup>';
+      relEff += '<sup title="HR-derived absolute risks assume proportional hazards and a comparator event risk at the same follow-up; baseline-risk uncertainty is excluded">*</sup>';
     }
 
     // Absolute effect cells
@@ -1743,7 +1769,7 @@ function buildSofHtml(standalone) {
     var abs = calcAbsoluteEffects(oc);
     return abs && abs.approximate;
   });
-  if (hasHR) footnotes.push('* Absolute effect for HR estimated using baseline risk and assumed constant hazard; interpret with caution.');
+  if (hasHR) footnotes.push('* HR-derived absolute risks assume proportional hazards and a comparator event risk at the same follow-up; baseline-risk uncertainty is excluded.');
   var hasLowK = state.outcomes.some(function(oc) { return oc.k && oc.k < 10; });
   if (hasLowK) footnotes.push('Publication bias assessment limited when fewer than 10 studies.');
   if (footnotes.length > 0) {
